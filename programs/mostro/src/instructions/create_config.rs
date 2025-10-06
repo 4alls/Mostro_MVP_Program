@@ -18,7 +18,7 @@ pub struct CreateConfig<'info> {
 	#[account(
 		mut,
 	)]
-	pub fee_payer: Signer<'info>,
+	pub fee_payer: Signer<'info>, // the wallet that pays the rent to initialize the config account
 
 	#[account(
 		init,
@@ -29,11 +29,11 @@ pub struct CreateConfig<'info> {
 		],
 		bump,
 	)]
-	pub config: Account<'info, Config>,
+	pub config: Account<'info, Config>, // the PDA account that will hold your global config.
 
-	pub admin: Signer<'info>,
+	pub admin: Signer<'info>, // signer who will be set as the admin in the config
 
-	pub system_program: Program<'info, System>,
+	pub system_program: Program<'info, System>, // required for creating new accounts on Solana
 }
 
 /// Initialize platform configuration
