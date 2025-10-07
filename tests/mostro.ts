@@ -1,22 +1,20 @@
+// import { AnchorProvider, BN, setProvider, web3 } from "@coral-xyz/anchor";
 
-import { AnchorProvider, BN, setProvider, web3 } from "@coral-xyz/anchor";
-import * as mostroClient from "../app/program_client";
-import chai from "chai";
-import { assert, expect } from "chai";
-import chaiAsPromised from "chai-as-promised";
-import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
-chai.use(chaiAsPromised);
+// const programId = new web3.PublicKey("2SYi3NFHTnCXHEzxNpa8nEyehkmZPyikbCarmxngSdTn");
 
-const programId = new web3.PublicKey("2SYi3NFHTnCXHEzxNpa8nEyehkmZPyikbCarmxngSdTn");
+import * as anchor from "@coral-xyz/anchor"
+import { assert } from "chai"
 
-describe("mostro tests", () => {
-  // Configure the client to use the local cluster
-  const provider = anchor.AnchorProvider.env();
-  anchor.setProvider(provider);
+describe("mostro_program", () => {
+  const provider = anchor.AnchorProvider.local()
+  anchor.setProvider(provider)
 
-  const systemWallet = (provider.wallet as NodeWallet).payer;
+  const program = anchor.workspace.MostroProgram
 
-  it("First test", async () => {
-    // Add your test here
-  });
-});
+  it("creates config PDA", async () => {
+    const tx = await program.methods
+      .createConfig({ admin: provider.wallet.publicKey })
+      .rpc()
+    assert.ok(tx)
+  })
+})
