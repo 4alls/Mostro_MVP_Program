@@ -1,9 +1,9 @@
-
-
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum MostroError {
+pub enum ErrorCode {
+	#[msg("Only the admin can perform this action.")]
+    UnauthorizedAdmin,
 	#[msg("Unauthorized access")]
 	Unauthorized,
 	#[msg("Percentages must sum to 100")]

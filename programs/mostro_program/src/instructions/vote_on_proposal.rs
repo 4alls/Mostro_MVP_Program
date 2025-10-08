@@ -1,80 +1,78 @@
-use crate::*;
 use anchor_lang::prelude::*;
-use std::str::FromStr;
-
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{Mint, Token, TokenAccount},
-};
+use crate::state::{Proposal, Vote};
+use anchor_spl::token::Mint;
 
 #[derive(Accounts)]
-#[instruction(
-	name: String,
-	proposal_id: u64,
-	vote_choice: bool,
-)]
+#[instruction(name: String, proposal_id: u64)]
 pub struct VoteOnProposal<'info> {
-	#[account(
-		mut,
-	)]
-	pub fee_payer: Signer<'info>,
+    /// Account paying for transaction
+    #[account(mut)]
+    pub fee_payer: Signer<'info>,
 
-	#[account(
-		mut,
-		seeds = [
-			b"artist_proposal",
-			name.as_bytes().as_ref(),
-			proposal_id.to_le_bytes().as_ref(),
-		],
-		bump,
-	)]
-	pub proposal: Account<'info, Proposal>,
+    /// Proposal PDA
+    #[account(
+        mut,
+        seeds = [
+            b"artist_proposal",
+            name.as_bytes().as_ref(),
+            proposal_id.to_le_bytes().as_ref()
+        ],
+        bump
+    )]
+    pub proposal: Account<'info, Proposal>,
 
-	#[account(
-		init,
-		space=82,
-		payer=fee_payer,
-		seeds = [
-			b"vote",
-			proposal.key().as_ref(),
-			voter.key().as_ref(),
-		],
-		bump,
-	)]
-	pub vote: Account<'info, Vote>,
+    /// Vote account for this voter
+    #[account(
+        init,
+        payer = fee_payer,
+        space = Vote::space(),
+        seeds = [
+            b"vote",
+            proposal.key().as_ref(),
+            voter.key().as_ref()
+        ],
+        bump
+    )]
+    pub vote: Account<'info, Vote>,
 
-	pub voter: Signer<'info>,
+    /// The voter
+    #[account(mut)]
+    pub voter: Signer<'info>,
 
-	/// CHECK: implement manual checks if needed
-	pub voter_token_account: UncheckedAccount<'info>,
+    /// CHECK: voter's token account (used to calculate voting power)
+    pub voter_token_account: UncheckedAccount<'info>,
 
-	pub token_mint: Account<'info, Mint>,
+    /// Token mint representing voting power
+    pub token_mint: Account<'info, Mint>,
 
-	pub system_program: Program<'info, System>,
+    /// System program
+    pub system_program: Program<'info, System>,
 }
 
-/// Token holders vote on proposals
-///
-/// Accounts:
-/// 0. `[writable, signer]` fee_payer: [AccountInfo] 
-/// 1. `[writable]` proposal: [Proposal] Proposal to vote on
-/// 2. `[writable]` vote: [Vote] Vote account to create
-/// 3. `[signer]` voter: [AccountInfo] Voter's wallet
-/// 4. `[]` voter_token_account: [AccountInfo] Voter's token account
-/// 5. `[]` token_mint: [Mint] Token mint
-/// 6. `[]` system_program: [AccountInfo] Auto-generated, for account initialization
-///
-/// Data:
-/// - name: [String] Artist name
-/// - proposal_id: [u64] Proposal ID
-/// - vote_choice: [bool] Vote choice (true=yes, false=no)
-pub fn handler(
-	ctx: Context<VoteOnProposal>,
-	name: String,
-	proposal_id: u64,
-	vote_choice: bool,
+/// Instruction handler for voting on a proposal
+pub fn vote_on_proposal_handler(
+    ctx: Context<VoteOnProposal>,
+    _name: String,
+    _proposal_id: u64,
+    vote_choice: bool,
 ) -> Result<()> {
-    // Implement your business logic here...
-	
-	Ok(())
+    let vote_account = &mut ctx.accounts.vote;
+    let proposal = &mut ctx.accounts.proposal;
+
+    // Initialize vote account
+    vote_account.proposal = proposal.key();
+    vote_account.voter = ctx.accounts.voter.key();
+    vote_account.vote_choice = vote_choice;
+
+    // TODO: Calculate voting power based on voter's token balance
+    vote_account.voting_power = 0;
+
+    vote_account.bump = ctx.bumps.vote;
+
+    // TODO: Update proposal's vote counts
+    // if vote_choice { proposal.yes_votes += vote_account.voting_power; }
+    // else { proposal.no_votes += vote_account.voting_power; }
+    // proposal.total_voting_power += vote_account.voting_power;
+
+    Ok(())
 }
