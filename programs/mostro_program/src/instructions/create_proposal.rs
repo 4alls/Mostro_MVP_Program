@@ -1,78 +1,78 @@
-use crate::*;
 use anchor_lang::prelude::*;
-use std::str::FromStr;
-
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{Mint, Token, TokenAccount},
-};
+use crate::state::{Artist, Proposal};
 
 #[derive(Accounts)]
-#[instruction(
-	name: String,
-	proposal_id: u64,
-	title: String,
-	number_of_tokens: u64,
-)]
+#[instruction(name: String, proposal_id: u64, title: String)]
 pub struct CreateProposal<'info> {
-	#[account(
-		mut,
-	)]
-	pub fee_payer: Signer<'info>,
+    /// Account paying for the creation of the proposal PDA
+    #[account(mut)]
+    pub fee_payer: Signer<'info>,
 
-	#[account(
-		mut,
-		seeds = [
-			b"artist",
-			name.as_bytes().as_ref(),
-		],
-		bump,
-	)]
-	pub artist: Account<'info, Artist>,
+    /// Artist PDA associated with the proposal
+    #[account(
+        mut,
+        seeds = [b"artist", name.as_bytes().as_ref()],
+        bump
+    )]
+    pub artist: Account<'info, Artist>,
 
-	#[account(
-		init,
-		space=202,
-		payer=fee_payer,
-		seeds = [
-			b"artist_proposal",
-			name.as_bytes().as_ref(),
-			proposal_id.to_le_bytes().as_ref(),
-		],
-		bump,
-	)]
-	pub proposal: Account<'info, Proposal>,
+    /// Proposal PDA, initialized for this new proposal
+    #[account(
+        init,
+        payer = fee_payer,
+        space = Proposal::space(), // <-- uses the one in state/proposal.rs
+        seeds = [
+            b"artist_proposal",
+            name.as_bytes().as_ref(),
+            proposal_id.to_le_bytes().as_ref()
+        ],
+        bump
+    )]
+    pub proposal: Account<'info, Proposal>,
 
-	pub artist_authority: Signer<'info>,
+    /// Authority of the artist creating the proposal
+    pub artist_authority: Signer<'info>,
 
-	pub token_mint: Account<'info, Mint>,
-
-	pub system_program: Program<'info, System>,
+    /// System program
+    pub system_program: Program<'info, System>,
 }
 
-/// Artist creates governance proposal
-///
-/// Accounts:
-/// 0. `[writable, signer]` fee_payer: [AccountInfo] 
-/// 1. `[writable]` artist: [Artist] Artist account
-/// 2. `[writable]` proposal: [Proposal] Proposal account to create
-/// 3. `[signer]` artist_authority: [AccountInfo] Artist's wallet authority
-/// 4. `[]` token_mint: [Mint] Token mint for voting power calculation
-/// 5. `[]` system_program: [AccountInfo] Auto-generated, for account initialization
-///
-/// Data:
-/// - name: [String] Artist name
-/// - proposal_id: [u64] Proposal ID
-/// - title: [String] Proposal title
-/// - number_of_tokens: [u64] Tokens to sell if approved
-pub fn handler(
-	ctx: Context<CreateProposal>,
-	name: String,
-	proposal_id: u64,
-	title: String,
-	number_of_tokens: u64,
+/// Handler to initialize a proposal
+pub fn create_proposal_handler(
+    ctx: Context<CreateProposal>,
+    _name: String, // only used for PDA derivation
+    proposal_id: u64,
+    title: String,
+    number_of_tokens: u64,
 ) -> Result<()> {
-    // Implement your business logic here...
-	
-	Ok(())
+    // Validate title length
+    if title.len() > Proposal::MAX_TITLE_LENGTH {
+        return Err(ProgramError::InvalidInstructionData.into());
+    }
+
+    let artist = &ctx.accounts.artist;
+
+    // Ensure only artist authority can create the proposal
+    require_keys_eq!(ctx.accounts.artist_authority.key(), artist.artist_wallet);
+
+    let proposal = &mut ctx.accounts.proposal;
+
+    // Initialize basic fields
+    proposal.proposal_id = proposal_id;
+    proposal.title = title;
+    proposal.artist = artist.key();
+    proposal.number_of_tokens = number_of_tokens;
+
+    // Initialize default values
+    proposal.start_date = Clock::get()?.unix_timestamp;
+    proposal.end_date = 0; // can be set later
+    proposal.status = 0; // e.g., 0 = pending
+    proposal.yes_votes = 0;
+    proposal.no_votes = 0;
+    proposal.total_voting_power = 0;
+
+    // Store bump
+    proposal.bump = ctx.bumps.proposal;
+
+    Ok(())
 }

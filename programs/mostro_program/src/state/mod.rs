@@ -1,6 +1,3 @@
-
-use anchor_lang::prelude::*;
-
 pub mod config;
 pub mod artist;
 pub mod proposal;
