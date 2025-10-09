@@ -5,6 +5,7 @@ pub struct Proposal {
     pub artist: Pubkey,          // 32 bytes
     pub proposal_id: u64,        // 8 bytes
     pub title: String,           // 4 bytes length prefix + up to MAX_TITLE_LENGTH
+    pub description_uri: String, // 4 bytes length prefix + max
     pub number_of_tokens: u64,   // 8 bytes
     pub start_date: i64,         // 8 bytes
     pub end_date: i64,           // 8 bytes
@@ -17,12 +18,15 @@ pub struct Proposal {
 
 impl Proposal {
     pub const MAX_TITLE_LENGTH: usize = 128;
+    pub const MAX_DESCRIPTION_URI_LENGTH: usize = 200;
+    
     /// Calculates the space needed for the account
     pub const fn space() -> usize {
         8 +                    // account discriminator
         32 +                   // artist Pubkey
         8 +                    // proposal_id
         4 + Self::MAX_TITLE_LENGTH + // title String (length prefix + max)
+        4 + Self::MAX_DESCRIPTION_URI_LENGTH + // description_uri
         8 +                    // number_of_tokens
         8 + 8 +                // start_date + end_date
         1 +                    // status

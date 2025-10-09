@@ -8,9 +8,6 @@ pub mod instructions;
 pub mod state;
 pub mod error;
 
-// Optional future modules
-// pub mod constants;
-
 // Bring all instruction handlers into program scope
 pub use instructions::*;
 pub use state::*;
@@ -18,6 +15,7 @@ pub use error::*;
 
 declare_id!("2SYi3NFHTnCXHEzxNpa8nEyehkmZPyikbCarmxngSdTn");
 
+#[cfg(feature = "anchor")]
 #[program]
 pub mod mostro_program {
     use super::*;
@@ -80,3 +78,30 @@ pub mod mostro_program {
         release_tokens_to_artist(ctx, amount)
     }
 }
+
+// ---------------------------------------
+// Add a Cargo-only entrypoint for manual testing
+// ---------------------------------------
+#[cfg(not(feature = "anchor"))]
+mod manual_entrypoint {
+    use solana_program::entrypoint;
+    use solana_program::{
+        account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey,
+    };
+
+    entrypoint!(process_instruction);
+
+    pub fn process_instruction(
+        _program_id: &Pubkey,
+        _accounts: &[AccountInfo],
+        _instruction_data: &[u8],
+    ) -> ProgramResult {
+        Ok(())
+    }
+}
+
+// -----------------------------
+// Include tests (integration / unit)
+// -----------------------------
+#[cfg(test)]
+mod tests;

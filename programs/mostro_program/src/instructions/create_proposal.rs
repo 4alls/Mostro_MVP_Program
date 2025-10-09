@@ -65,7 +65,7 @@ pub fn create_proposal_handler(
 
     // Initialize default values
     proposal.start_date = Clock::get()?.unix_timestamp;
-    proposal.end_date = 0; // can be set later
+    proposal.end_date = proposal.start_date + 7 * 24 * 60 * 60; // 1 week
     proposal.status = 0; // e.g., 0 = pending
     proposal.yes_votes = 0;
     proposal.no_votes = 0;

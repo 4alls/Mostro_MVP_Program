@@ -54,11 +54,11 @@ impl Artist {
     ///  - Strings in Anchor are stored with a 4-byte length prefix.
     ///  - Always include 8 bytes for the Anchor discriminator.
     /// ---------------------------------------------
-    pub fn space(max_uri_len: usize) -> usize {
+    pub fn space() -> usize {
         8 +   // discriminator
         32 +  // artist_wallet
         32 +  // pump_token_mint
-        4 + max_uri_len + // metadata_uri (4-byte length prefix + string)
+        4 + MAX_URI_LEN + // metadata_uri (4-byte length prefix + string)
         1 +   // percentage_artist
         1 +   // percentage_mostro
         32 +  // global_config
