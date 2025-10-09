@@ -32,7 +32,7 @@ pub struct CreateArtist<'info> {
     pub pump_token_mint: Account<'info, Mint>,
 
     #[account(
-        seeds = [b"config_mostro"],
+        seeds = [b"global_config"],
         bump
     )]
     pub global_config: Account<'info, Config>,

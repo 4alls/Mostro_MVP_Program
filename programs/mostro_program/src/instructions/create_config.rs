@@ -31,7 +31,9 @@ pub fn create_config_handler(
     config.admin_wallet = *ctx.accounts.admin.key; 
     config.pump_fun_service_wallet = pump_fun_service_wallet;
 
-    // bump is automatically assigned by Anchor
+    // store bump so clients can verify PDA
+    config.bump = ctx.bumps.config;
+
     Ok(())
 }
 

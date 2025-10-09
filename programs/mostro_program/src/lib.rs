@@ -16,7 +16,7 @@ pub use instructions::*;
 pub use state::*;
 pub use error::*;
 
-declare_id!("2SYi3NFHTnCXHEzxNpa8nEyehkmZPyikbCarmxngSdTn");
+declare_id!("5PdCQfcDhiZCyQs6wx3rz1DZ2c1nkcxAXPYpLdmPHWrY");
 
 #[program]
 pub mod mostro_program {
