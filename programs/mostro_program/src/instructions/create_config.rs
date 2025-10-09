@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use crate::state::Config;
+use crate::error::ErrorCode;
 
 #[derive(Accounts)]
 pub struct CreateConfig<'info> {
@@ -24,11 +25,16 @@ pub fn create_config_handler(
     percentage_mostro: u8,
     pump_fun_service_wallet: Pubkey,
 ) -> Result<()> {
+    require!(
+        percentage_artist + percentage_mostro <= 100,
+        ErrorCode::InvalidPercentage
+    );
+
     let config = &mut ctx.accounts.config;
 
     config.percentage_artist = percentage_artist;
     config.percentage_mostro = percentage_mostro;
-    config.admin_wallet = *ctx.accounts.admin.key; 
+    config.admin_wallet = ctx.accounts.admin.key(); 
     config.pump_fun_service_wallet = pump_fun_service_wallet;
 
     // bump is automatically assigned by Anchor

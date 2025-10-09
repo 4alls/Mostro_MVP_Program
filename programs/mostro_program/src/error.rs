@@ -7,7 +7,7 @@ pub enum ErrorCode {
 	#[msg("Unauthorized access")]
 	Unauthorized,
 	#[msg("Percentages must sum to 100")]
-	InvalidPercentages,
+	InvalidPercentage,
 	#[msg("Proposal is not active")]
 	ProposalNotActive,
 	#[msg("Proposal has expired")]
