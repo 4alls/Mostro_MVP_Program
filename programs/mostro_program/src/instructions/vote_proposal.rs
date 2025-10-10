@@ -1,10 +1,12 @@
+#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug)])
+
 use anchor_lang::prelude::*;
 use crate::state::{Proposal, Vote};
 use anchor_spl::token::Mint;
 
 #[derive(Accounts)]
 #[instruction(name: String, proposal_id: u64)]
-pub struct VoteOnProposal<'info> {
+pub struct VoteProposal<'info> {
     /// Account paying for transaction
     #[account(mut)]
     pub fee_payer: Signer<'info>,
@@ -50,8 +52,8 @@ pub struct VoteOnProposal<'info> {
 }
 
 /// Instruction handler for voting on a proposal
-pub fn vote_on_proposal_handler(
-    ctx: Context<VoteOnProposal>,
+pub fn vote_proposal_handler(
+    ctx: Context<VoteProposal>,
     _name: String,
     _proposal_id: u64,
     vote_choice: bool,

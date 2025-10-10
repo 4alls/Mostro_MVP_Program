@@ -1,6 +1,8 @@
+#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug)])
+
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use crate::state::{Artist, Config, MAX_URI_LEN};
+use crate::state::{Artist, Config};
 use crate::error::ErrorCode;
 
 pub const ARTIST_SEED_PREFIX: &[u8] = b"artist";

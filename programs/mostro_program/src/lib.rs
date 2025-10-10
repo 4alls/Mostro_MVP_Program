@@ -1,4 +1,8 @@
+#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug)])
+
 use anchor_lang::prelude::*;
+// Compile this code only when the "anchor" feature is enabled (ignored in pure Cargo builds)
+#[cfg(feature = "anchor")] 
 use anchor_lang::solana_program::pubkey::Pubkey;
 
 // -----------------------------
@@ -9,9 +13,7 @@ pub mod state;
 pub mod error;
 
 // Bring all instruction handlers into program scope
-pub use instructions::*;
-pub use state::*;
-pub use error::*;
+use instructions::*;
 
 declare_id!("2SYi3NFHTnCXHEzxNpa8nEyehkmZPyikbCarmxngSdTn");
 
@@ -50,13 +52,13 @@ pub mod mostro_program {
         create_proposal_handler(ctx, name, proposal_id, title, number_of_tokens)
     }
 
-    pub fn vote_on_proposal(
-        ctx: Context<VoteOnProposal>,
+    pub fn vote_proposal(
+        ctx: Context<VoteProposal>,
         name: String,
         proposal_id: u64,
         vote_choice: bool,
     ) -> Result<()> {
-        vote_on_proposal_handler(ctx, name, proposal_id, vote_choice)
+        vote_proposal_handler(ctx, name, proposal_id, vote_choice)
     }
 
     // -----------------------------
@@ -75,7 +77,7 @@ pub mod mostro_program {
         ctx: Context<ReleaseTokens>,
         amount: u64,
     ) -> Result<()> {
-        release_tokens_to_artist(ctx, amount)
+        release_tokens_to_artist_handler(ctx, amount)
     }
 }
 
@@ -84,8 +86,8 @@ pub mod mostro_program {
 // ---------------------------------------
 #[cfg(not(feature = "anchor"))]
 mod manual_entrypoint {
-    use solana_program::entrypoint;
-    use solana_program::{
+    use anchor_lang::solana_program::entrypoint;
+    use anchor_lang::solana_program::{
         account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey,
     };
 

@@ -1,5 +1,9 @@
-use anchor_lang::prelude::*;
+#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug)])
 
+use anchor_lang::prelude::*;
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[account]
 pub struct Proposal {
     pub artist: Pubkey,          // 32 bytes

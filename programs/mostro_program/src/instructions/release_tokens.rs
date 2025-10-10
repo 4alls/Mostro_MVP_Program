@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug)])
+
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use crate::error::ErrorCode;
@@ -36,7 +38,7 @@ pub struct ReleaseTokens<'info> {
 }
 
 /// Admin releases tokens to artist via program-controlled vault
-pub fn release_tokens_to_artist(
+pub fn release_tokens_to_artist_handler(
     ctx: Context<ReleaseTokens>,
     amount: u64,
 ) -> Result<()> {
