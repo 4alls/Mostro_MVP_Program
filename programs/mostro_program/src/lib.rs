@@ -11,6 +11,7 @@ use anchor_lang::solana_program::pubkey::Pubkey;
 pub mod instructions;
 pub mod state;
 pub mod error;
+pub mod constants;
 
 // Bring all instruction handlers into program scope
 use instructions::*;
@@ -85,7 +86,7 @@ pub mod mostro_program {
         ctx: Context<ReleaseTokens>,
         amount: u64,
     ) -> Result<()> {
-        release_tokens_to_artist_handler(ctx, amount)
+        release_tokens_to_artist_handler(ctx)
     }
 }
 

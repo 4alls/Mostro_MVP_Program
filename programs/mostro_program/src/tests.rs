@@ -1050,7 +1050,7 @@ mod tests {
     }
 
     // Simulate a voting function inside this module
-    fn cast_vote(proposal: &Proposal, vote_yes: bool) -> Result<(), ErrorCode> {
+    fn cast_vote(proposal: &Proposal, _vote_yes: bool) -> Result<(), ErrorCode> {
         if proposal.status != 0 {
             return Err(ErrorCode::ProposalAlreadyExecuted);
         }
@@ -1082,5 +1082,246 @@ mod tests {
         crate::error::ErrorCode::ProposalAlreadyExecuted => {},
         e => panic!("Unexpected error: {:?}", e),
         }
+    }
+    
+    // -----------------------------
+    // Global mock for all release_tokens tests with admin check
+    // -----------------------------
+    fn mock_release_tokens_to_artist_with_admin(
+        proposal: &mut Proposal,
+        artist_wallet: &Pubkey,
+        caller: &Pubkey,
+        admin: &Pubkey
+    ) -> Result<(), ErrorCode> {
+        // Admin check
+        if caller != admin {
+            return Err(ErrorCode::Unauthorized); // Define Unauthorized in your error enum
+        }
+
+        // Check proposal artist matches
+        if proposal.artist != *artist_wallet {
+            return Err(ErrorCode::InvalidArtist);
+        }
+
+        // Check proposal is approved
+        if proposal.status != 1 {
+            return Err(ErrorCode::ProposalNotApproved);
+        }
+
+        // Mock token transfer
+        proposal.status = 3; // Executed
+        Ok(())
+    }
+
+    #[test]
+    fn test_release_tokens_approved_proposal() {
+        let artist_wallet = Pubkey::new_unique();
+        let admin = Pubkey::new_unique();
+
+        let mut proposal = Proposal {
+            artist: artist_wallet,
+            proposal_id: 1,
+            title: "Approved Proposal".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,
+            start_date: 0,
+            end_date: 1_000_000_000,
+            status: 1, // Approved
+            yes_votes: 600,
+            no_votes: 400,
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        let result = mock_release_tokens_to_artist_with_admin(
+            &mut proposal,      // proposal
+            &artist_wallet,     // artist wallet
+            &admin,             // <-- caller must be the admin
+            &admin              // the actual admin
+        );
+
+        assert!(result.is_ok(), "Token release should succeed for approved proposal");
+        assert_eq!(proposal.status, 3, "Proposal status should be updated to Executed");
+    }
+
+    #[test]
+    fn test_release_tokens_not_approved() {
+        let artist_wallet = Pubkey::new_unique();
+        let admin = Pubkey::new_unique();
+
+        let mut proposal = Proposal {
+            artist: artist_wallet,
+            proposal_id: 2,
+            title: "Not Approved Proposal".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,
+            start_date: 0,
+            end_date: 1_000_000_000,
+            status: 2, // Not approved (Rejected or Pending)
+            yes_votes: 400,
+            no_votes: 600,
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        let result = mock_release_tokens_to_artist_with_admin(
+            &mut proposal,      // proposal
+            &artist_wallet,     // artist wallet
+            &admin,             // <-- caller must be the admin
+            &admin              // the actual admin
+        );
+
+        // Expect an error for not approved proposal
+        assert!(result.is_err(), "Token release should fail if proposal is not approved");
+
+        match result.unwrap_err() {
+            ErrorCode::ProposalNotApproved => {}, // expected
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        // Proposal status should remain unchanged
+        assert_eq!(proposal.status, 2, "Proposal status should remain unchanged");
+    }
+
+    #[test]
+    fn test_release_tokens_non_admin() {
+        let artist_wallet = Pubkey::new_unique();
+        let admin = Pubkey::new_unique();
+        let non_admin = Pubkey::new_unique();
+
+        let mut proposal = Proposal {
+            artist: artist_wallet,
+            proposal_id: 3,
+            title: "Approved Proposal".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,
+            start_date: 0,
+            end_date: 1_000_000_000,
+            status: 1, // Approved
+            yes_votes: 600,
+            no_votes: 400,
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        let result = mock_release_tokens_to_artist_with_admin(&mut proposal, &artist_wallet, &non_admin, &admin);
+
+        // Expect failure due to unauthorized caller
+        assert!(result.is_err(), "Non-admin should not be able to release tokens");
+
+        match result.unwrap_err() {
+            ErrorCode::Unauthorized => {}, // expected
+        e => panic!("Unexpected error: {:?}", e),
+        }
+
+        // Proposal status should remain unchanged
+        assert_eq!(proposal.status, 1, "Proposal status should remain unchanged");
+    }
+
+    #[test]
+    fn test_proposal_status_changes_to_executed() {
+        let artist_wallet = Pubkey::new_unique();
+        let admin = Pubkey::new_unique();
+
+        let mut proposal = Proposal {
+            artist: artist_wallet,
+            proposal_id: 10,
+            title: "Execute Status Test".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 500,
+            start_date: 0,
+            end_date: 1_000_000_000,
+            status: 1, // Approved
+            yes_votes: 300,
+            no_votes: 200,
+            total_voting_power: 500,
+            bump: 0,
+        };
+
+        // Call the mock release tokens handler
+        let result = mock_release_tokens_to_artist_with_admin(
+            &mut proposal,
+            &artist_wallet,
+            &admin, // caller is admin
+            &admin  // actual admin
+        );
+
+        // Check that the function succeeded
+        assert!(result.is_ok(), "Token release should succeed");
+
+        // Check that the proposal status changed to Executed
+        assert_eq!(proposal.status, 3, "Proposal status should be updated to Executed after release");
+    }
+
+
+    #[test]
+    fn test_vault_balance_decreases_artist_balance_increases() {
+        let artist_wallet = Pubkey::new_unique();
+        let admin = Pubkey::new_unique();
+
+        let mut proposal = Proposal {
+            artist: artist_wallet,
+            proposal_id: 20,
+            title: "Token Transfer Test".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,
+            start_date: 0,
+            end_date: 1_000_000_000,
+            status: 1, // Approved
+            yes_votes: 600,
+            no_votes: 400,
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        // Mock token accounts
+        let mut vault_balance: u64 = 5000;
+        let mut artist_balance: u64 = 100;
+
+        // Mock release tokens handler with balance simulation
+        fn mock_release_tokens_with_balances(
+            proposal: &mut Proposal,
+            artist_wallet: &Pubkey,
+            caller: &Pubkey,
+            admin: &Pubkey,
+            vault_balance: &mut u64,
+            artist_balance: &mut u64
+        ) -> Result<(), ErrorCode> {
+            if caller != admin {
+                return Err(ErrorCode::Unauthorized);
+            }
+            if proposal.artist != *artist_wallet {
+                return Err(ErrorCode::InvalidArtist);
+            }
+            if proposal.status != 1 {
+                return Err(ErrorCode::ProposalNotApproved);
+            }
+
+            // Simulate token transfer
+            if *vault_balance < proposal.number_of_tokens {
+                return Err(ErrorCode::InsufficientTokens); // optional
+            }
+            *vault_balance -= proposal.number_of_tokens;
+            *artist_balance += proposal.number_of_tokens;
+
+            // Mark proposal as executed
+            proposal.status = 3;
+            Ok(())
+        }
+
+        // Execute mock token transfer
+        let result = mock_release_tokens_with_balances(
+            &mut proposal,
+            &artist_wallet,
+            &admin,
+            &admin,
+            &mut vault_balance,
+            &mut artist_balance
+        );
+
+        assert!(result.is_ok(), "Token release should succeed");
+        assert_eq!(proposal.status, 3, "Proposal status should be Executed");
+        assert_eq!(vault_balance, 4000, "Vault balance should decrease by proposal amount");
+        assert_eq!(artist_balance, 1100, "Artist balance should increase by proposal amount");
     }
 }
