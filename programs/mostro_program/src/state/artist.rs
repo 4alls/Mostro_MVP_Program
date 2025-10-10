@@ -1,4 +1,7 @@
+#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug)])
+
 use anchor_lang::prelude::*;
+use serde::{Serialize, Deserialize};
 
 /// ---------------------------------------------
 /// Artist Account
@@ -19,6 +22,7 @@ use anchor_lang::prelude::*;
 /// Maximum length for artist metadata URI
 pub const MAX_URI_LEN: usize = 200;
 
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[account]
 pub struct Artist {
     /// Wallet address of the artist (not necessarily the vault owner)

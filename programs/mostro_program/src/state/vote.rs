@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug)])
+
 use anchor_lang::prelude::*;
 
 #[account]

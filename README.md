@@ -78,10 +78,15 @@ npm install
 ### Build the programs
 
 ```bash
-anchor build
+anchor clean
+anchor build -- --features anchor
 ```
 
 ### Run tests
+
+```bash
+cargo test --features manual
+```
 
 ```bash
 anchor test
