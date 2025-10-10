@@ -4,9 +4,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use crate::state::{Artist, Config};
 use crate::error::ErrorCode;
-
-pub const ARTIST_SEED_PREFIX: &[u8] = b"artist";
-pub const ARTIST_VAULT_SEED_PREFIX: &[u8] = b"artist_vault";
+use crate::constants::{ARTIST_SEED_PREFIX, ARTIST_VAULT_SEED_PREFIX};
 
 #[derive(Accounts)]
 pub struct CreateArtist<'info> {

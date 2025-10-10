@@ -32,4 +32,6 @@ pub enum ErrorCode {
   VotingStillActive,
   #[msg("Invalid instruction data.")]
   InvalidInstructionData,
+	#[msg("Invalid artist for this proposal.")]
+  InvalidArtist,
 }
