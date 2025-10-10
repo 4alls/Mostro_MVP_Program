@@ -61,6 +61,14 @@ pub mod mostro_program {
         vote_proposal_handler(ctx, name, proposal_id, vote_choice)
     }
 
+    pub fn finalize_proposal(
+        ctx: Context<FinalizeProposal>,
+        name: String,
+        proposal_id: u64,
+    ) -> Result<()> {
+        finalize_proposal_handler(ctx, name, proposal_id)
+    }
+
     // -----------------------------
     // Artist Management
     // -----------------------------

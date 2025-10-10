@@ -2,7 +2,8 @@
 
 use anchor_lang::prelude::*;
 use crate::state::{Proposal, Vote};
-use anchor_spl::token::Mint;
+use crate::error::ErrorCode;
+use anchor_spl::token::{Mint, TokenAccount};
 
 #[derive(Accounts)]
 #[instruction(name: String, proposal_id: u64)]
@@ -41,8 +42,8 @@ pub struct VoteProposal<'info> {
     #[account(mut)]
     pub voter: Signer<'info>,
 
-    /// CHECK: voter's token account (used to calculate voting power)
-    pub voter_token_account: UncheckedAccount<'info>,
+    /// Voter's SPL token account used to determine voting power
+    pub voter_token_account: Account<'info, TokenAccount>,
 
     /// Token mint representing voting power
     pub token_mint: Account<'info, Mint>,
@@ -58,23 +59,54 @@ pub fn vote_proposal_handler(
     _proposal_id: u64,
     vote_choice: bool,
 ) -> Result<()> {
-    let vote_account = &mut ctx.accounts.vote;
     let proposal = &mut ctx.accounts.proposal;
+
+    // Check voting period 
+    let clock = Clock::get()?;
+    require!(
+        clock.unix_timestamp <= proposal.end_date,
+        ErrorCode::VotingEnded
+    );
+
+     // Check if user has already voted
+    require!(
+        ctx.accounts.vote.to_account_info().data_is_empty(),
+        ErrorCode::AlreadyVoted
+    );
+
+    let vote_account = &mut ctx.accounts.vote;
 
     // Initialize vote account
     vote_account.proposal = proposal.key();
     vote_account.voter = ctx.accounts.voter.key();
     vote_account.vote_choice = vote_choice;
 
-    // TODO: Calculate voting power based on voter's token balance
-    vote_account.voting_power = 0;
-
+    // Calculate voting power based on voter's token balance
+    let voter_token_account: &Account<TokenAccount> = &ctx.accounts.voter_token_account;
+    let voting_power = voter_token_account.amount;
+    require!(voting_power > 0, ErrorCode::NoVotingPower);
+    
+    vote_account.voting_power = voting_power;
     vote_account.bump = ctx.bumps.vote;
 
-    // TODO: Update proposal's vote counts
-    // if vote_choice { proposal.yes_votes += vote_account.voting_power; }
-    // else { proposal.no_votes += vote_account.voting_power; }
-    // proposal.total_voting_power += vote_account.voting_power;
+    // Update proposal tallies
+    if vote_choice {
+        proposal.yes_votes = proposal
+            .yes_votes
+            .checked_add(vote_account.voting_power)
+            .ok_or(ErrorCode::Overflow)?;
+    } else {
+        proposal.no_votes = proposal
+        .no_votes
+        .checked_add(vote_account.voting_power)
+        .ok_or(ErrorCode::Overflow)?;
+    }
+
+    // Track total votes for approval threshold
+    proposal.total_voting_power = proposal
+        .total_voting_power
+        .checked_add(vote_account.voting_power)
+        .ok_or(ErrorCode::Overflow)?;
 
     Ok(())
 }
