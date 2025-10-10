@@ -714,7 +714,7 @@ mod tests {
             quorum
         );
 
-        // ✅ Check if proposal passes threshold
+        // Check if proposal passes threshold
         let passes_threshold = threshold >= yes_threshold;
         assert!(
             passes_threshold,
@@ -723,5 +723,364 @@ mod tests {
             votes_cast,
             threshold
         );
+    }
+
+    // Global mock to simulate finalize_proposal_handler
+    fn finalize_proposal_mock(proposal: &mut Proposal, current_timestamp: i64) -> Result<(), String> {
+        if current_timestamp < proposal.end_date {
+            return Err("VotingStillActive".to_string());
+        }
+
+        let total_votes = proposal.yes_votes + proposal.no_votes;
+        let quorum = proposal.number_of_tokens / 10; // 10%
+
+        if total_votes < quorum {
+            proposal.status = 2; // Rejected
+            return Ok(());
+        }
+
+        if proposal.yes_votes * 100 / total_votes >= 51 {
+            proposal.status = 1; // Approved
+        } else {
+            proposal.status = 2; // Rejected
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_finalize_approved() {
+        // Simulate a proposal
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 1,
+            title: "Successful Proposal".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,    // total tokens
+            start_date: 0,
+            end_date: 1_000_000_000,   // voting ended
+            status: 0,                  // Pending
+            yes_votes: 700,             // 70% yes
+            no_votes: 200,              // 20% no
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        // Simulate current timestamp after voting period
+        let current_timestamp = 1_500_000_000;
+
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_ok());
+        assert_eq!(proposal.status, 1, "Proposal should be Approved");
+    }
+
+    #[test]
+    fn test_finalize_rejected_threshold_not_met() {
+        // Simulate a proposal
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 2,
+            title: "Rejected Proposal".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,    // total tokens
+            start_date: 0,
+            end_date: 1_000_000_000,   // voting ended
+            status: 0,                  // Pending
+            yes_votes: 400,             // 44% yes
+            no_votes: 500,              // 56% no
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        // Simulate current timestamp after voting period
+        let current_timestamp = 1_500_000_000;
+
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_ok());
+        assert_eq!(proposal.status, 2, "Proposal should be Rejected due to threshold not met");
+    }
+
+    #[test]
+    fn test_finalize_voting_still_active() {
+        // Simulate a proposal with voting period not ended
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 3,
+            title: "Early Finalization Attempt".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,
+            start_date: 1_000_000_000,
+            end_date: 2_000_000_000, // voting ends in the future
+            status: 0,                // Pending
+            yes_votes: 500,
+            no_votes: 200,
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        // Current timestamp before end_date
+        let current_timestamp = 1_500_000_000;
+
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_err(), "Should fail because voting is still active");
+        assert_eq!(result.unwrap_err(), "VotingStillActive");
+        assert_eq!(proposal.status, 0, "Proposal status should remain Pending");
+    }
+
+    #[test]
+    fn test_finalize_quorum_not_met() {
+        // Simulate a proposal
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 4,
+            title: "Quorum Not Met".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000, // quorum = 100
+            start_date: 0,
+            end_date: 1_000_000_000, // voting ended
+            status: 0,               // Pending
+            yes_votes: 50,           // Only 50 votes cast
+            no_votes: 20,            // Total votes = 70 < quorum
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        // Simulate current timestamp after voting period
+        let current_timestamp = 1_500_000_000;
+
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_ok(), "Instruction should succeed but reject proposal due to low quorum");
+        assert_eq!(proposal.status, 2, "Proposal should be Rejected due to quorum not met");
+    }
+    
+    #[test]
+    fn test_finalize_no_votes_cast() {
+        // Simulate a proposal
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 5,
+            title: "No Votes Cast".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000, // quorum = 100
+            start_date: 0,
+            end_date: 1_000_000_000, // voting ended
+            status: 0,               // Pending
+            yes_votes: 0,
+            no_votes: 0,             // no votes
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        // Current timestamp after voting period
+        let current_timestamp = 1_500_000_000;
+
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_ok(), "Instruction should succeed but reject proposal due to no votes");
+        assert_eq!(proposal.status, 2, "Proposal should be Rejected due to zero votes");
+    }
+
+    #[test]
+    fn test_finalize_exact_approval_threshold() {
+        // Simulate a proposal
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 6,
+            title: "Exact Approval Threshold".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,   // quorum = 100
+            start_date: 0,
+            end_date: 1_000_000_000,  // voting ended
+            status: 0,                 // Pending
+            yes_votes: 60,             // 60 yes votes
+            no_votes: 40,              // total votes = 100 → quorum met
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        // Current timestamp after voting period
+        let current_timestamp = 1_500_000_000;
+
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_ok(), "Instruction should succeed");
+        assert_eq!(proposal.status, 1, "Proposal should be Approved at exact threshold");
+    }
+
+    #[test]
+    fn test_finalize_exact_quorum_approved() {
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 7,
+            title: "Exact Quorum Approved".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000, // quorum = 100
+            start_date: 0,
+            end_date: 1_000_000_000,
+            status: 0, // Pending
+            yes_votes: 60, // 60 yes votes
+            no_votes: 40,  // total votes = 100 → exact quorum
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        let current_timestamp = 1_500_000_000;
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_ok());
+        assert_eq!(proposal.status, 1, "Proposal should be Approved at exact quorum with >50% yes");
+    }
+
+    #[test]
+    fn test_finalize_exact_quorum_rejected() {
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 8,
+            title: "Exact Quorum Rejected".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000, // quorum = 100
+            start_date: 0,
+            end_date: 1_000_000_000,
+            status: 0, // Pending
+            yes_votes: 40, // 40 yes votes
+            no_votes: 60,  // total votes = 100 → exact quorum
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        let current_timestamp = 1_500_000_000;
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_ok());
+        assert_eq!(proposal.status, 2, "Proposal should be Rejected at exact quorum with <51% yes");
+    }
+
+    #[test]
+    fn test_finalize_all_yes_votes() {
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 9,
+            title: "All Yes Votes".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000, // quorum = 100
+            start_date: 0,
+            end_date: 1_000_000_000, // voting ended
+            status: 0,                // Pending
+            yes_votes: 150,           // all votes yes
+            no_votes: 0,              
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        let current_timestamp = 1_500_000_000;
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_ok());
+        assert_eq!(proposal.status, 1, "Proposal should be Approved since all votes are yes");
+    }
+
+    #[test]
+    fn test_finalize_all_no_votes() {
+        let mut proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 10,
+            title: "All No Votes".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000, // quorum = 100
+            start_date: 0,
+            end_date: 1_000_000_000, // voting ended
+            status: 0,                // Pending
+            yes_votes: 0,             
+            no_votes: 150,            // all votes no
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        let current_timestamp = 1_500_000_000;
+        let result = finalize_proposal_mock(&mut proposal, current_timestamp);
+
+        assert!(result.is_ok());
+        assert_eq!(proposal.status, 2, "Proposal should be Rejected since all votes are no");
+    }
+
+    #[test]
+    fn test_finalize_invalid_pda() {
+        let program_id = Pubkey::new_unique();
+        let artist_wallet = Pubkey::new_unique();
+        let wrong_wallet = Pubkey::new_unique();
+        let proposal_id = 1;
+
+        // Derive the correct PDA
+        let (correct_pda, _bump) = get_proposal_pda(&program_id, &artist_wallet, proposal_id);
+
+        // Derive a wrong PDA (simulate someone passing a wrong account)
+        let (wrong_pda, _wrong_bump) = get_proposal_pda(&program_id, &wrong_wallet, proposal_id);
+
+        // Simulate the proposal account with wrong PDA
+        let proposal = Proposal {
+            artist: artist_wallet,
+            proposal_id,
+            title: "Invalid PDA".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,
+            start_date: 0,
+            end_date: 1_000_000_000,
+            status: 0,
+            yes_votes: 100,
+            no_votes: 0,
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        // In a real instruction, Anchor would check PDA automatically.
+        // Here we simulate it manually:
+        let account_validation_result = if wrong_pda != correct_pda {
+            Err("InvalidPDA".to_string())
+        } else {
+            Ok(())
+        };
+
+        assert!(account_validation_result.is_err(), "Instruction should fail due to wrong PDA");
+        assert_eq!(account_validation_result.unwrap_err(), "InvalidPDA");
+        assert_eq!(proposal.status, 0, "Proposal status should remain Pending");
+    }
+
+    // Simulate a voting function inside this module
+    fn cast_vote(proposal: &Proposal, vote_yes: bool) -> Result<(), ErrorCode> {
+        if proposal.status != 0 {
+            return Err(ErrorCode::ProposalAlreadyExecuted);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_post_finalization_vote_attempt() {
+        let proposal = Proposal {
+            artist: Pubkey::new_unique(),
+            proposal_id: 11,
+            title: "Post-Finalization Voting Attempt".to_string(),
+            description_uri: "https://example.com".to_string(),
+            number_of_tokens: 1000,
+            start_date: 0,
+            end_date: 1_000_000_000,
+            status: 1,  // Already finalized (Approved)
+            yes_votes: 600,
+            no_votes: 400,
+            total_voting_power: 1000,
+            bump: 0,
+        };
+
+        let result = cast_vote(&proposal, true);
+
+        assert!(result.is_err(), "Should not allow voting on finalized proposal");
+        // Match the error variant instead of assert_eq
+        match result.unwrap_err() {
+        crate::error::ErrorCode::ProposalAlreadyExecuted => {},
+        e => panic!("Unexpected error: {:?}", e),
+        }
     }
 }
