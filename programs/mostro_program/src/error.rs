@@ -34,4 +34,6 @@ pub enum ErrorCode {
   InvalidInstructionData,
 	#[msg("Invalid artist for this proposal.")]
   InvalidArtist,
+	#[msg("Proposal has not been finalized yet.")]  
+    ProposalNotFinalized,  
 }

@@ -12,11 +12,10 @@ pub mod release_tokens;
 // -----------------------------
 // Instruction handlers & accounts
 // -----------------------------
-// Re-export all handlers and context structs for convenient use in `lib.rs`
-pub use create_artist::{create_artist_handler, CreateArtist};
-pub use create_config::{create_config_handler, CreateConfig};
-pub use create_proposal::{create_proposal_handler, CreateProposal};
-pub use vote_proposal::{vote_proposal_handler, VoteProposal};
-pub use finalize_proposal::{finalize_proposal_handler, FinalizeProposal};
-pub use buy_tokens_for_proposal::{buy_tokens_for_proposal_handler, BuyTokensForProposal};
-pub use release_tokens::{release_tokens_handler, ReleaseTokens};
+pub use create_artist::*;             // exports `create_artist_handler` and `CreateArtist`
+pub use create_config::*;             // exports `create_config_handler` and `CreateConfig`
+pub use create_proposal::*;           // exports `create_proposal_handler` and `CreateProposal`
+pub use vote_proposal::*;             // exports `vote_proposal_handler` and `VoteProposal`
+pub use finalize_proposal::*;         // exports `finalize_proposal_handler` and `FinalizeProposal`
+pub use buy_tokens_for_proposal::*;   // exports `buy_tokens_for_proposal_handler` and `BuyTokensForProposal`
+pub use release_tokens::*;            // exports `release_tokens_handler` and `ReleaseTokens`
