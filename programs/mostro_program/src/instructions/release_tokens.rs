@@ -10,6 +10,7 @@ pub struct ReleaseTokens<'info> {
     #[account(mut)]
     pub proposal: Account<'info, Proposal>,
 
+    /// CHECK: This is the artist's wallet. We don't need to deserialize it, just transfer lamports.
     #[account(mut)]
     pub artist_wallet: AccountInfo<'info>,
 
@@ -35,15 +36,17 @@ pub fn release_tokens_handler(
                 **ctx.accounts.artist_wallet.try_borrow_mut_lamports()? += proposal.usdc_collected;
 
                 // Off-chain: mint `tokens_equivalent` artist tokens to artist wallet
+                // (handled outside the program)
             }
         },
         2 => { // Rejected
             // Refund USDC to artist (or backers? depending on logic)
             **ctx.accounts.artist_wallet.try_borrow_mut_lamports()? += proposal.usdc_collected;
         },
-        _ => return Err(ErrorCode::ProposalNotFinalized.into())
+        _ => return Err(ErrorCode::ProposalNotFinalized.into()),
     }
 
+    // Reset counters
     proposal.usdc_collected = 0;
     proposal.artist_tokens_sold = 0;
 

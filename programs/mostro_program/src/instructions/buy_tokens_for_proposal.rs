@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use crate::state::{Proposal, VoterToken};
+use crate::state::Proposal;
 use crate::error::ErrorCode;
 
 #[derive(Accounts)]
@@ -10,10 +10,6 @@ pub struct BuyTokensForProposal<'info> {
     #[account(mut)]
     pub proposal: Account<'info, Proposal>,
 
-    // PDA that will hold tokens & USDC
-    #[account(mut)]
-    pub proposal_vault: Account<'info, ProposalVault>,
-
     pub system_program: Program<'info, System>,
 }
 
@@ -21,7 +17,7 @@ pub fn buy_tokens_for_proposal_handler(
     ctx: Context<BuyTokensForProposal>,
     amount_usdc: u64,
     artist_tokens_price: u64,
-    is_campaign_purchase: bool, // determines early access
+    is_campaign_purchase: bool,
 ) -> Result<u64> {
     let proposal = &mut ctx.accounts.proposal;
 
@@ -32,7 +28,7 @@ pub fn buy_tokens_for_proposal_handler(
 
     // Optional: mark early access
     if is_campaign_purchase {
-        proposal.early_access = true; // only first campaign buyers
+        proposal.early_access = true;
     }
 
     Ok(tokens_bought)

@@ -1,3 +1,5 @@
+use anchor_lang::prelude::*; // includes both #[account] and Pubkey
+
 #[account]
 pub struct Vote {
     pub voter: Pubkey,
