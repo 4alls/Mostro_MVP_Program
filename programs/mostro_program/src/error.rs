@@ -35,5 +35,7 @@ pub enum ErrorCode {
 	#[msg("Invalid artist for this proposal.")]
   InvalidArtist,
 	#[msg("Proposal has not been finalized yet.")]  
-    ProposalNotFinalized,  
+  ProposalNotFinalized,  
+	#[msg("Unauthorized artist")]
+	UnauthorizedArtist,
 }

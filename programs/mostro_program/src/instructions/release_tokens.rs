@@ -5,16 +5,22 @@ use crate::error::ErrorCode;
 #[derive(Accounts)]
 pub struct ReleaseTokens<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub admin: Signer<'info>, 
+    // The platform admin triggers the release of funds. 
+    // Only the admin should call this to prevent unauthorized transfers.
 
     #[account(mut)]
-    pub proposal: Account<'info, Proposal>,
+    pub proposal: Account<'info, Proposal>, 
+    // The proposal being finalized. Tracks USDC collected, tokens sold, status, etc.
 
     /// CHECK: This is the artist's wallet. We don't need to deserialize it, just transfer lamports.
     #[account(mut)]
-    pub artist_wallet: AccountInfo<'info>,
+    pub artist_wallet: AccountInfo<'info>, 
+    // Unsafe AccountInfo because we just need to transfer lamports (SOL or USDC if wrapped in SPL token). 
+    // No checks needed here; only the admin can call, so this is safe.
 
-    pub system_program: Program<'info, System>,
+    pub system_program: Program<'info, System>, 
+    // Required to perform lamport transfers on-chain
 }
 
 pub fn release_tokens_handler(
@@ -26,27 +32,27 @@ pub fn release_tokens_handler(
     match proposal.status {
         1 => { // Approved
             if proposal.milestone_reached {
-                // Transfer all USDC to artist
+                // If milestone is reached, release all USDC collected directly to the artist
                 **ctx.accounts.artist_wallet.try_borrow_mut_lamports()? += proposal.usdc_collected;
             } else {
-                // Calculate remaining tokens equivalent to USDC
-                let tokens_equivalent = proposal.usdc_collected / artist_token_price;
+                // Otherwise, calculate how many artist tokens should be minted for the collected USDC
+                let _tokens_equivalent = proposal.usdc_collected / artist_token_price;
 
-                // Transfer USDC
+                // Transfer USDC to artist
                 **ctx.accounts.artist_wallet.try_borrow_mut_lamports()? += proposal.usdc_collected;
 
-                // Off-chain: mint `tokens_equivalent` artist tokens to artist wallet
-                // (handled outside the program)
+                // Tokens are minted off-chain according to `tokens_equivalent` (not handled on-chain)
             }
         },
         2 => { // Rejected
-            // Refund USDC to artist (or backers? depending on logic)
+            // Refund USDC back to artist (or possibly backers; depends on your business logic)
             **ctx.accounts.artist_wallet.try_borrow_mut_lamports()? += proposal.usdc_collected;
         },
-        _ => return Err(ErrorCode::ProposalNotFinalized.into()),
+        _ => return Err(ErrorCode::ProposalNotFinalized.into()), 
+        // If proposal is not yet finalized, prevent releasing funds
     }
 
-    // Reset counters
+    // Reset counters to prevent double distribution
     proposal.usdc_collected = 0;
     proposal.artist_tokens_sold = 0;
 
