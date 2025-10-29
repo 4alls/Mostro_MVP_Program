@@ -224,6 +224,7 @@ npx ts-node scripts/create_config.ts
 ---
 
 ## Diagram
-[MostroMVP_Architecture.pdf](https://github.com/user-attachments/files/23205958/MostroMVP_Architecture.pdf)
+<img width="1024" height="1024" alt="MostroMVP_Architecture" src="https://github.com/user-attachments/assets/1cb0bddf-26a1-496b-97aa-3918cdf1dfeb" />
+
 
 
