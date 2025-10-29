@@ -1,15 +1,7 @@
-use anchor_lang::prelude::*; // includes both #[account] and Pubkey
+use anchor_lang::prelude::*;
 
+/// Minimal account just to prevent double voting
 #[account]
-pub struct Vote {
-    pub voter: Pubkey,
-    pub proposal: Pubkey,
-    pub vote_yes: bool,
-    pub token_weight: u64,
-}
-
-impl Vote {
-    pub fn space() -> usize {
-        8 + 32 + 32 + 1 + 8
-    }
+pub struct VoteMarker {
+    // Nothing else needed; existence is enough
 }

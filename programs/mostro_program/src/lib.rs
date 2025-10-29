@@ -2,10 +2,6 @@
 
 use anchor_lang::prelude::*;
 
-// Compile this code only when the "anchor" feature is enabled (ignored in pure Cargo builds)
-#[cfg(feature = "anchor")]
-use anchor_lang::solana_program::pubkey::Pubkey;
-
 // -----------------------------
 // Declare modules
 // -----------------------------
@@ -19,7 +15,6 @@ use instructions::*;
 
 declare_id!("2SYi3NFHTnCXHEzxNpa8nEyehkmZPyikbCarmxngSdTn");
 
-#[cfg(feature = "anchor")]
 #[program]
 pub mod mostro_program {
     use super::*;
@@ -83,8 +78,15 @@ pub mod mostro_program {
         amount_usdc: u64,
         artist_tokens_price: u64,
         is_campaign_purchase: bool,
+        vault_bump: u8,
     ) -> Result<u64> {
-        buy_tokens_for_proposal_handler(ctx, amount_usdc, artist_tokens_price, is_campaign_purchase)
+        buy_tokens_for_proposal_handler(
+            ctx,
+            amount_usdc,
+            artist_tokens_price,
+            is_campaign_purchase,
+            vault_bump,
+        )
     }
 
     // -----------------------------
