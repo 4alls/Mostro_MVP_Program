@@ -224,32 +224,6 @@ npx ts-node scripts/create_config.ts
 ---
 
 ## Diagram
+[MostroMVP_Architecture.pdf](https://github.com/user-attachments/files/23205958/MostroMVP_Architecture.pdf)
 
-```mermaid
-flowchart LR
-    subgraph Admin
-        A[Admin Wallet]
-    end
 
-    subgraph Global
-        C[Config PDA]
-    end
-
-    subgraph ArtistModule
-        AR[Artist PDA]
-        AV[Artist Vault PDA]
-    end
-
-    subgraph ProposalModule
-        P[Proposal PDA]
-        V[Vote PDA]
-    end
-
-    A -->|Creates| C
-    A -->|Creates| AR
-    AR -->|Vault| AV
-    AR -->|Creates Proposal| P
-    P -->|Voting| V
-    P -->|Approved| AV -->|Release Tokens| AR
-
-```
