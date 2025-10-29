@@ -1,40 +1,36 @@
-#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug)])
-
 use anchor_lang::prelude::*;
-use serde::{Serialize, Deserialize};
+use crate::state::Vote;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[account]
 pub struct Proposal {
-    pub artist: Pubkey,          // 32 bytes
-    pub proposal_id: u64,        // 8 bytes
-    pub title: String,           // 4 bytes length prefix + up to MAX_TITLE_LENGTH
-    pub description_uri: String, // 4 bytes length prefix + max
-    pub number_of_tokens: u64,   // 8 bytes
-    pub start_date: i64,         // 8 bytes
-    pub end_date: i64,           // 8 bytes
-    pub status: u8,              // 1 byte
-    pub yes_votes: u64,          // 8 bytes
-    pub no_votes: u64,           // 8 bytes
-    pub total_voting_power: u64, // 8 bytes
-    pub bump: u8,                // 1 byte
+    pub title: String,
+    pub description: String,
+    pub creator: Pubkey,
+    pub number_of_tokens: u64,
+    pub yes_votes: u64,
+    pub no_votes: u64,
+    pub start_date: i64,
+    pub end_date: i64,
+    pub status: u8,               // 0: Active, 1: Approved, 2: Rejected
+    pub milestone_reached: bool,
+    pub usdc_collected: u64,
+    pub artist_tokens_sold: u64,
+    pub bump: u8,                 // store bump explicitly
+    pub early_access: bool,       // optional: distinguish campaign tokens
 }
 
 impl Proposal {
-    pub const MAX_TITLE_LENGTH: usize = 128;
-    pub const MAX_DESCRIPTION_URI_LENGTH: usize = 200;
-    
-    /// Calculates the space needed for the account
-    pub const fn space() -> usize {
-        8 +                    // account discriminator
-        32 +                   // artist Pubkey
-        8 +                    // proposal_id
-        4 + Self::MAX_TITLE_LENGTH + // title String (length prefix + max)
-        4 + Self::MAX_DESCRIPTION_URI_LENGTH + // description_uri
-        8 +                    // number_of_tokens
-        8 + 8 +                // start_date + end_date
-        1 +                    // status
-        8 + 8 + 8 +            // yes_votes + no_votes + total_voting_power
-        1 // bump
+    pub fn space() -> usize {
+        8 +               // discriminator
+        4 + 100 +         // title
+        4 + 500 +         // description
+        32 +              // creator
+        8 + 8 + 8 + 8 +   // number_of_tokens, yes_votes, no_votes, usdc_collected
+        8 + 8 +           // start_date + end_date
+        1 +               // status
+        1 +               // milestone_reached
+        8 +               // artist_tokens_sold
+        1 +               // bump
+        1                 // early_access
     }
 }

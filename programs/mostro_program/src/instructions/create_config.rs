@@ -1,5 +1,3 @@
-#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug)])
-
 use anchor_lang::prelude::*;
 use crate::state::Config;
 use crate::error::ErrorCode;
@@ -33,13 +31,10 @@ pub fn create_config_handler(
     );
 
     let config = &mut ctx.accounts.config;
-
     config.percentage_artist = percentage_artist;
     config.percentage_mostro = percentage_mostro;
-    config.admin_wallet = ctx.accounts.admin.key(); 
+    config.admin_wallet = ctx.accounts.admin.key();
     config.pump_fun_service_wallet = pump_fun_service_wallet;
 
-    // bump is automatically assigned by Anchor
     Ok(())
 }
-
