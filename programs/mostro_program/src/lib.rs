@@ -11,7 +11,7 @@ use state::*;
 /// -----------------------------
 /// Program Declaration
 /// -----------------------------
-declare_id!("33pbYVD5NnHpnAc6kfSjiymWUt2Ttgp7NMTZMaY621c7"); // replace this with actual id
+declare_id!("CHHG6MRJ8EBenBeUk3xM1FJGQgwarK8qsJ8QGk2mo9Wd"); // replace this with actual program id
 
 #[program]
 pub mod mostro_program {
