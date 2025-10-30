@@ -12,9 +12,6 @@ pub mod release_tokens;
 // -----------------------------
 // Instruction handlers & accounts
 // -----------------------------
-// -----------------------------
-// Instruction handlers & accounts
-// -----------------------------
 pub use create_artist::{create_artist_handler, CreateArtist};
 pub use create_config::{create_config_handler, CreateConfig};
 pub use create_proposal::{create_proposal_handler, CreateProposal};
