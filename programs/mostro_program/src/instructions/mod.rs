@@ -12,10 +12,10 @@ pub mod release_tokens;
 // -----------------------------
 // Instruction handlers & accounts
 // -----------------------------
-pub use create_artist::{create_artist_handler, CreateArtist};
-pub use create_config::{create_config_handler, CreateConfig};
-pub use create_proposal::{create_proposal_handler, CreateProposal};
-pub use vote_proposal::{vote_proposal_handler, VoteProposal};
-pub use finalize_proposal::{finalize_proposal_handler, FinalizeProposal};
-pub use buy_tokens_for_proposal::{buy_tokens_for_proposal_handler, BuyTokensForProposal};
-pub use release_tokens::{release_tokens_handler, ReleaseTokens};        
+pub use create_artist::*;
+pub use create_config::*;
+pub use create_proposal::*;
+pub use vote_proposal::*;
+pub use finalize_proposal::*;
+pub use buy_tokens_for_proposal::*;
+pub use release_tokens::*;   
