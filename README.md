@@ -1,168 +1,89 @@
-# Artist Proposal & Token Management Program
+# Artist Proposal & Token Management Program (Summary)
 
-A Solana/Anchor-based program for managing artists, proposals, voting, and token distributions. Tokens are minted via **Pump.fun** and programmatically allocated to artists’ vaults, ensuring secure governance and automated fund release.
-
----
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Accounts & PDAs](#accounts--pdas)
-4. [Program Flow](#program-flow)
-5. [Instructions](#instructions)
-6. [Vault & Token Management](#vault--token-management)
-7. [Voting & Proposal Mechanics](#voting--proposal-mechanics)
-8. [Deployment](#deployment)
-9. [Security & Best Practices](#security--best-practices)
-10. [Diagram](#diagram)
-11. [References](#references)
+A Solana/Anchor program for managing artists, proposals, token sales, and voting. Tokens are minted via **Pump.fun** and securely held in program-controlled vaults.
 
 ---
 
 ## Overview
 
-This program provides:
-
-- Artist management: Create artist accounts with metadata and custom allocation percentages.
-- Proposal management: Artists can submit proposals for community voting.
-- Voting: Token-based voting with SPL token balances determining voting power.
-- Token release: Upon proposal approval, tokens are automatically released from program-controlled vaults to artists.
-
-Tokens are minted via Pump.fun, ensuring full programmatic control and seamless integration with vaults, proposals, and voting logic.
+- **Artist Management:** Create artist accounts with metadata, mint references, and token allocation.
+- **Proposals:** Artists can submit proposals for community voting.
+- **Voting:** Token-weighted voting using SPL token balances.
+- **Token Release:** Approved proposals release tokens from vaults to artist wallets.
+- **Early Access / Milestones:** Supports early milestone approval and early-access purchases.
 
 ---
 
-## Architecture
+## Key Accounts & PDAs
 
-- **Global Config (Config)**: Singleton account storing default percentages for artist and platform, and admin wallet.
-- **Artist (Artist)**: PDA representing an artist, including wallet, metadata URI, vault, and allocation percentages.
-- **Vault (ArtistVault)**: Program-controlled token account holding the artist's tokens. Tokens are released upon proposal approval.
-- **Proposal (Proposal)**: PDA storing proposal info: title, token amount, start/end timestamps, votes, and status.
-- **Vote (Vote)**: PDA representing a single voter’s choice and voting power per proposal.
-
----
-
-## Accounts & PDAs
-
-| Account     | Seeds                                            | Description                                               |
-| ----------- | ------------------------------------------------ | --------------------------------------------------------- |
-| Config      | `[b"global_config"]`                             | Stores global percentages & admin wallet                  |
-| Artist      | `[ARTIST_SEED_PREFIX, artist_wallet]`            | Stores artist-specific data and percentages               |
-| ArtistVault | `[ARTIST_VAULT_SEED_PREFIX, artist_wallet]`      | Holds tokens for proposals, controlled by PDA             |
-| Proposal    | `[b"artist_proposal", artist_name, proposal_id]` | Stores proposal info (title, token amount, votes, status) |
-| Vote        | `[b"vote", proposal.key, voter.key]`             | Tracks individual votes per proposal                      |
+| Account          | Seed / PDA Pattern                                           | Purpose |
+|-----------------|-------------------------------------------------------------|---------|
+| **Artist**       | `[b"artist", artist_name]`                                  | Stores artist metadata, mint, total tokens |
+| **Proposal**     | `[b"proposal", artist.key(), creator.key()]`               | Stores proposal details (title, description, tokens, votes, status) |
+| **Vote Marker**  | `[b"vote", proposal.key(), voter.key()]`                   | Prevents double voting |
+| **Artist Vault** | `[b"artist_vault", proposal.key()]`                        | Holds artist tokens securely |
+| **USDC Vault**   | `[b"usdc_vault", proposal.key()]`                           | Holds collected USDC during token sales |
 
 ---
 
 ## Program Flow
 
-1. Admin creates global config and sets default percentages.
-2. Admin creates artist; artist account and vault are initialized with default or custom percentages.
-3. Artist submits proposal; stored in a Proposal PDA with token allocation.
-4. Voters vote; voting power determined by SPL token balance.
-5. Finalize proposal after voting period ends, checking quorum and approval threshold.
-6. Release tokens to artist; approved proposals release tokens from vaults to artist wallets.
+1. **Create Artist:** Admin initializes artist PDA and vault with metadata and token allocation.  
+2. **Create Proposal:** Artist (or creator) submits a proposal; stores title, description, token allocation, milestone flags, and voting period.  
+3. **Vote Proposal:** Users vote; voting power = SPL token balance. Vote marker PDA prevents double voting.  
+4. **Finalize Proposal:** After end date or milestone reached; checks quorum (10%) and majority (≥51%) to approve/reject.  
+5. **Release Tokens:** Admin releases USDC and/or artist tokens from vaults to artist wallets. Handles approved, rejected, or milestone-based early approvals.  
+6. **Buy Tokens for Proposal:** Users can purchase artist tokens with USDC. Tokens transferred from artist vault to buyer; USDC collected in program vault.
 
 ---
 
-## Instructions
+## Voting & Token Rules
 
-### 1. Create Config
-
-**Purpose:** Initialize global configuration with default percentages and admin wallet.  
-**Usage Example:**
-create_config_handler(context, percentage_artist, percentage_mostro, pump_fun_service_wallet)
-
-**Notes:**
-
-- Percentages must sum ≤ 100.
-
----
-
-### 2. Create Artist
-
-**Purpose:** Initialize a new artist account and associated vault.  
-**Usage Example:**
-create_artist_handler(context, metadata_uri, optional_percentage_artist, optional_percentage_mostro)
-
-**Notes:**
-
-- Only the admin can perform this action.
-- Percentages default to global config if not provided.
-
----
-
-### 3. Create Proposal
-
-**Purpose:** Submit a new proposal for voting.  
-**Usage Example:**
-create_proposal_handler(context, artist_name, proposal_id, title, number_of_tokens)
-
-**Notes:**
-
-- Only the artist authority can create a proposal.
-- Proposal duration defaults to 1 week.
-
----
-
-### 4. Vote Proposal
-
-**Purpose:** Cast a vote on a proposal.  
-**Usage Example:**
-vote_proposal_handler(context, artist_name, proposal_id, vote_choice)
-
-**Notes:**
-
-- Voting power equals the SPL token balance in the voter’s account.
-- Prevents double voting and checks that voting period is active.
-
----
-
-### 5. Finalize Proposal
-
-**Purpose:** Finalize voting results after the period ends.  
-**Usage Example:**
-finalize_proposal_handler(context, artist_name, proposal_id)
-
-**Notes:**
-
-- Quorum: at least 10% of total tokens must participate.
-- Approval threshold: at least 51% yes votes for approval.
-
----
-
-### 6. Release Tokens to Artist
-
-**Purpose:** Transfer approved proposal tokens from vault to artist wallet.  
-**Usage Example:**
-release_tokens_to_artist_handler(context)
-
-**Notes:**
-
-- Only approved proposals (status = approved) can execute.
-- Uses program-controlled PDA authority for secure transfer.
+- **Default Voting Period:** 10 days (configurable)  
+- **Quorum:** ≥10% of total allocated tokens must participate  
+- **Approval Threshold:** ≥51% yes votes  
+- **Early Milestone Approval:** If milestone reached and majority yes votes, proposal can finalize early  
+- **Early Access:** Campaign purchases can flag early-access votes  
 
 ---
 
 ## Vault & Token Management
 
-- Vaults are program-owned PDAs `[ARTIST_VAULT_SEED_PREFIX, artist_wallet]`.
-- PDA authority signs transactions to release tokens securely.
-- Tokens minted via Pump.fun are deposited into vaults upon artist creation or as needed.
-- Only program PDAs can release tokens to maintain security.
+- **PDAs:** Only program-controlled PDAs can release tokens.
+- **USDC & Tokens:** USDC collected in vaults; artist tokens released to buyers or artists.  
+- **Financial Safety:** Resets collected USDC and sold tokens after release to prevent double spending.  
+- **Token Pricing:** Program calculates tokens per USDC spent.
 
 ---
 
-## Voting & Proposal Mechanics
+## Security & Best Practices
 
-- Default voting period: 1 week.
-- Voting power = number of tokens in voter’s SPL token account.
-- Quorum requirement: 10% of total tokens.
-- Approval threshold: 51% yes votes.
-- Individual votes tracked per Vote PDA.
+- Only admin or artist authority can call critical instructions.  
+- PDA seeds and bumps must be verified before actions.  
+- Tokens remain in vaults until proposal approval.  
+- Vote marker PDAs prevent double voting.  
+- Regular audits recommended for token allocation and voting logic.
 
 ---
+
+## Getting Started
+
+**Tech Stack:**
+
+- Solana  
+- Anchor  
+- TypeScript  
+- @coral-xyz/anchor SDK  
+- Chai (for tests)
+
+**Deployment / Testing:**
+
+```bash
+anchor build -- --features anchor
+cargo test --features manual
+anchor test
+npx ts-node scripts/create_config.ts
+```
 
 ## Getting Started
 
