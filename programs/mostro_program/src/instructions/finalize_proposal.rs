@@ -22,9 +22,7 @@ pub struct FinalizeProposal<'info> {
 /// 1. Ensures voting period has ended or milestone reached.
 /// 2. Checks quorum and determines proposal status.
 /// 3. Sets proposal status to Approved (1) or Rejected (2)
-pub fn finalize_proposal_handler(
-    ctx: Context<FinalizeProposal>,
-) -> Result<()> {
+pub fn finalize_proposal_handler(ctx: Context<FinalizeProposal>) -> Result<()> {
     let proposal = &mut ctx.accounts.proposal;
     let clock = Clock::get()?; // Get current blockchain timestamp
 

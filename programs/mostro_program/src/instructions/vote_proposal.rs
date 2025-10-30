@@ -39,8 +39,8 @@ pub struct VoteProposal<'info> {
 /// -----------------------------
 pub fn vote_proposal_handler(
     ctx: Context<VoteProposal>,
-    vote_yes: bool,          // true = yes, false = no
-    voter_token_balance: u64 // number of tokens voter has for weighting
+    vote_yes: bool,           // true = yes, false = no
+    voter_token_balance: u64, // number of tokens voter has for weighting
 ) -> Result<()> {
     let proposal = &mut ctx.accounts.proposal;
     let clock = Clock::get()?;

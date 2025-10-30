@@ -14,6 +14,6 @@ impl Config {
         1 +   // percentage_artist
         1 +   // percentage_mostro
         32 +  // admin_wallet
-        32    // pump_fun_service_wallet
+        32 // pump_fun_service_wallet
     }
 }

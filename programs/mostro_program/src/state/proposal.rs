@@ -1,10 +1,12 @@
+use anchor_lang::prelude::Pubkey;
 use anchor_lang::prelude::*;
 
 #[account]
+#[derive(Debug, PartialEq)]
 pub struct Proposal {
     // --- Link to the artist ---
-    pub artist: Pubkey,           // The artist account this proposal belongs to
-    pub creator: Pubkey,          // Wallet that created the proposal
+    pub artist: Pubkey,  // The artist account this proposal belongs to
+    pub creator: Pubkey, // Wallet that created the proposal
 
     // --- Proposal content ---
     pub title: String,
@@ -20,7 +22,7 @@ pub struct Proposal {
     pub end_date: i64,
 
     // --- Status flags ---
-    pub status: u8,               // 0 = Active, 1 = Approved, 2 = Rejected
+    pub status: u8, // 0 = Active, 1 = Approved, 2 = Rejected
     pub milestone_reached: bool,
     pub early_access: bool,
 
@@ -44,6 +46,6 @@ impl Proposal {
         1 +               // status
         1 + 1 +           // milestone_reached, early_access
         8 + 8 +           // usdc_collected, artist_tokens_sold
-        1                 // bump
+        1 // bump
     }
 }

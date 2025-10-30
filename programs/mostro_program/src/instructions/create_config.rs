@@ -18,7 +18,7 @@ pub struct CreateConfig<'info> {
     pub admin: Signer<'info>,
 
     /// The global configuration PDA.
-    /// 
+    ///
     /// - Seeds: fixed "global_config" to ensure there’s only one.
     /// - Payer: admin funds the rent for this account.
     /// - Space: computed via Config::space() for safety and readability.

@@ -1,7 +1,5 @@
-use anchor_lang::prelude::*; 
 use crate::state::{Artist, Proposal};
-use crate::instructions::*;
-use crate::error::ErrorCode;
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct CreateProposal<'info> {
@@ -36,7 +34,7 @@ pub fn create_proposal_handler(
     let clock = Clock::get()?;
 
     // --- Link proposal to artist identity ---
-    proposal.artist = ctx.accounts.artist.key();  // now valid
+    proposal.artist = ctx.accounts.artist.key(); // now valid
     proposal.creator = ctx.accounts.creator.key();
 
     // --- Proposal content ---

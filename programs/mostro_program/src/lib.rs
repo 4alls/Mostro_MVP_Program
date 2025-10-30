@@ -1,20 +1,21 @@
-#![allow(unexpected_cfgs)] // Suppress warnings from Anchor macros (e.g., #[cfg(anchor-debug])]
+#![allow(unexpected_cfgs)] // suppress Anchor macro warnings
 
 use anchor_lang::prelude::*;
 
 // -----------------------------
-// Declare modules
+// Declare modules first
 // -----------------------------
+pub mod error;
 pub mod instructions;
 pub mod state;
-pub mod error;
-pub mod constants;
-
-// Bring all instruction handlers into program scope
-use instructions::*;
 
 declare_id!("2SYi3NFHTnCXHEzxNpa8nEyehkmZPyikbCarmxngSdTn");
 
+
+/// -----------------------------
+/// Anchor program entrypoint
+/// -----------------------------
+#[cfg(feature = "anchor")]
 #[program]
 pub mod mostro_program {
     use super::*;
@@ -28,12 +29,7 @@ pub mod mostro_program {
         percentage_mostro: u8,
         pump_fun_service_wallet: Pubkey,
     ) -> Result<()> {
-        create_config_handler(
-            ctx,
-            percentage_artist,
-            percentage_mostro,
-            pump_fun_service_wallet,
-        )
+        create_config_handler(ctx, percentage_artist, percentage_mostro, pump_fun_service_wallet)
     }
 
     // -----------------------------
@@ -67,9 +63,7 @@ pub mod mostro_program {
         vote_proposal_handler(ctx, vote_yes, voter_token_balance)
     }
 
-    pub fn finalize_proposal(
-        ctx: Context<FinalizeProposal>,
-    ) -> Result<()> {
+    pub fn finalize_proposal(ctx: Context<FinalizeProposal>) -> Result<()> {
         finalize_proposal_handler(ctx)
     }
 
@@ -80,13 +74,7 @@ pub mod mostro_program {
         is_campaign_purchase: bool,
         vault_bump: u8,
     ) -> Result<u64> {
-        buy_tokens_for_proposal_handler(
-            ctx,
-            amount_usdc,
-            artist_tokens_price,
-            is_campaign_purchase,
-            vault_bump,
-        )
+        buy_tokens_for_proposal_handler(ctx, amount_usdc, artist_tokens_price, is_campaign_purchase, vault_bump)
     }
 
     // -----------------------------
@@ -101,15 +89,7 @@ pub mod mostro_program {
         mint: Pubkey,
         total_tokens: u64,
     ) -> Result<()> {
-        create_artist_handler(
-            ctx,
-            artist_name,
-            image,
-            latest_single_title,
-            latest_single_duration,
-            mint,
-            total_tokens,
-        )
+        create_artist_handler(ctx, artist_name, image, latest_single_title, latest_single_duration, mint, total_tokens)
     }
 
     pub fn release_tokens_to_artist(
@@ -120,14 +100,13 @@ pub mod mostro_program {
     }
 }
 
-// ---------------------------------------
-// Add a Cargo-only entrypoint for manual testing
-// ---------------------------------------
-#[cfg(not(feature = "anchor"))]
+/// -----------------------------
+/// Manual cargo-only entrypoint
+/// -----------------------------
+#[cfg(feature = "manual")]
 mod manual_entrypoint {
-    use anchor_lang::solana_program::entrypoint;
     use anchor_lang::solana_program::{
-        account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey,
+        account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, pubkey::Pubkey,
     };
 
     entrypoint!(process_instruction);
@@ -141,8 +120,8 @@ mod manual_entrypoint {
     }
 }
 
-// -----------------------------
-// Include tests (integration / unit)
-// -----------------------------
+/// -----------------------------
+/// Include tests
+/// -----------------------------
 #[cfg(test)]
 mod tests;
