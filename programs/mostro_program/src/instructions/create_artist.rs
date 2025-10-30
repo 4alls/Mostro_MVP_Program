@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use crate::state::Artist;
 use crate::error::ErrorCode;
 
+
 #[derive(Accounts)]
 pub struct CreateArtist<'info> {
     /// The admin or platform authority responsible for initializing new artists.

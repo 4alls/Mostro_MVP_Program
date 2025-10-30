@@ -8,17 +8,9 @@ use anchor_lang::prelude::*;
 pub mod error;
 pub mod instructions;
 pub mod state;
+use instructions::*;
 
-declare_id!("2SYi3NFHTnCXHEzxNpa8nEyehkmZPyikbCarmxngSdTn");
-
-// Explicit imports for #[program]
-use instructions::create_config::{create_config_handler, CreateConfig};
-use instructions::create_artist::{create_artist_handler, CreateArtist};
-use instructions::create_proposal::{create_proposal_handler, CreateProposal};
-use instructions::buy_tokens_for_proposal::{buy_tokens_for_proposal_handler, BuyTokensForProposal};
-use instructions::vote_proposal::{vote_proposal_handler, VoteProposal};
-use instructions::finalize_proposal::{finalize_proposal_handler, FinalizeProposal};
-use instructions::release_tokens::{release_tokens_handler, ReleaseTokens};
+declare_id!("4oXq5TDyEmXhqJ39sguoPsq5DKmouubkz5ePjBbBYp7Q");
 
 /// -----------------------------
 /// Anchor program entrypoint

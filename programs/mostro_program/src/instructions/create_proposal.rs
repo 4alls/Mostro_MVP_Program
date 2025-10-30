@@ -1,5 +1,5 @@
-use crate::state::{Artist, Proposal};
 use anchor_lang::prelude::*;
+use crate::state::{Artist, Proposal};
 
 #[derive(Accounts)]
 pub struct CreateProposal<'info> {
