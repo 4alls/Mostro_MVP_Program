@@ -1,28 +1,24 @@
-#![allow(unexpected_cfgs)] // suppress Anchor macro warnings
-
 use anchor_lang::prelude::*;
 
-// -----------------------------
-// Declare modules first
-// -----------------------------
+// Re-export our instruction modules
 pub mod error;
-pub mod instructions;
 pub mod state;
+pub mod instructions;
+
 use instructions::*;
-
-declare_id!("4oXq5TDyEmXhqJ39sguoPsq5DKmouubkz5ePjBbBYp7Q");
+use state::*;
 
 /// -----------------------------
-/// Anchor program entrypoint
+/// Program Declaration
 /// -----------------------------
-#[cfg(feature = "anchor")]
+declare_id!("33pbYVD5NnHpnAc6kfSjiymWUt2Ttgp7NMTZMaY621c7"); // replace this with actual id
+
 #[program]
 pub mod mostro_program {
     use super::*;
 
-    // -----------------------------
-    // Global Config
-    // -----------------------------
+    // Each instruction is exposed to Anchor clients here
+
     pub fn create_config(
         ctx: Context<CreateConfig>,
         percentage_artist: u8,
@@ -32,9 +28,18 @@ pub mod mostro_program {
         create_config_handler(ctx, percentage_artist, percentage_mostro, pump_fun_service_wallet)
     }
 
-    // -----------------------------
-    // Governance / Proposals
-    // -----------------------------
+    pub fn create_artist(
+        ctx: Context<CreateArtist>,
+        artist_name: String,
+        image: String,
+        latest_single_title: String,
+        latest_single_duration: String,
+        mint: Pubkey,
+        total_tokens: u64,
+    ) -> Result<()> {
+        create_artist_handler(ctx, artist_name, image, latest_single_title, latest_single_duration, mint, total_tokens)
+    }
+
     pub fn create_proposal(
         ctx: Context<CreateProposal>,
         title: String,
@@ -44,15 +49,7 @@ pub mod mostro_program {
         early_access: bool,
         bump: u8,
     ) -> Result<()> {
-        create_proposal_handler(
-            ctx,
-            title,
-            description,
-            number_of_tokens,
-            milestone_reached,
-            early_access,
-            bump,
-        )
+        create_proposal_handler(ctx, title, description, number_of_tokens, milestone_reached, early_access, bump)
     }
 
     pub fn vote_proposal(
@@ -77,51 +74,10 @@ pub mod mostro_program {
         buy_tokens_for_proposal_handler(ctx, amount_usdc, artist_tokens_price, is_campaign_purchase, vault_bump)
     }
 
-    // -----------------------------
-    // Artist Management
-    // -----------------------------
-    pub fn create_artist(
-        ctx: Context<CreateArtist>,
-        artist_name: String,
-        image: String,
-        latest_single_title: String,
-        latest_single_duration: String,
-        mint: Pubkey,
-        total_tokens: u64,
-    ) -> Result<()> {
-        create_artist_handler(ctx, artist_name, image, latest_single_title, latest_single_duration, mint, total_tokens)
-    }
-
-    pub fn release_tokens_to_artist(
+    pub fn release_tokens(
         ctx: Context<ReleaseTokens>,
         artist_token_price: u64,
     ) -> Result<()> {
         release_tokens_handler(ctx, artist_token_price)
     }
 }
-
-/// -----------------------------
-/// Manual cargo-only entrypoint
-/// -----------------------------
-#[cfg(feature = "manual")]
-mod manual_entrypoint {
-    use anchor_lang::solana_program::{
-        account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, pubkey::Pubkey,
-    };
-
-    entrypoint!(process_instruction);
-
-    pub fn process_instruction(
-        _program_id: &Pubkey,
-        _accounts: &[AccountInfo],
-        _instruction_data: &[u8],
-    ) -> ProgramResult {
-        Ok(())
-    }
-}
-
-/// -----------------------------
-/// Include tests
-/// -----------------------------
-#[cfg(test)]
-mod tests;
