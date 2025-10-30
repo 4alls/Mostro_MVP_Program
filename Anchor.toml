@@ -6,11 +6,16 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-mostro_program = "33pbYVD5NnHpnAc6kfSjiymWUt2Ttgp7NMTZMaY621c7"
+#public key of the deployed program
+mostro_program = "CHHG6MRJ8EBenBeUk3xM1FJGQgwarK8qsJ8QGk2mo9Wd"
+
+[registry]
+url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "http://127.0.0.1:8899" 
-wallet = "~/.config/solana/id.json"
+cluster = "https://api.devnet.solana.com" 
+#signer wallet - private key that pays for transactions, deployments, and fees.
+wallet = "~/.config/solana/id.json" 
 
-#[scripts]
-#test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+[scripts]
+test = "cargo test-bpf"
