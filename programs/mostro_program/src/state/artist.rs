@@ -26,3 +26,24 @@ impl Artist {
         32 // mint
     }
 }
+
+/// USE InitSpace TO AUTOMATICALLY CALCULATE THE RIGHT SPACE FOR THE ACCOUNT
+/// USE [max_len] TO SET MAX LENGTHS FOR VARIABLE-LENGTH FIELDS
+/// REPLACE LatestSingle BY A VECTOR: Vec<LatestSingle>
+/*
+
+use anchor_lang::prelude::*;
+
+#[account]
+#[derive(InitSpace)]
+pub struct Artist {
+    #[max_len(50)]
+    pub name: String,
+    #[max_len(200)]
+    pub image: String,
+    pub latest_single: Vec<LatestSingle>,
+    pub total_tokens: u64,         
+    pub campaign_tokens_sold: u64, 
+    pub mint: Pubkey,              
+}
+ */

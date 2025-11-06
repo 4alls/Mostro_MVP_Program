@@ -12,7 +12,11 @@ pub struct CreateProposal<'info> {
     #[account(
         init,
         payer = creator,
+        // USE SPACE CALCULATION FROM THE PROPOSAL STATE
+        // space = 8 + Proposal::INIT_SPACE,
         space = Proposal::space(),
+        // THIS SEED WILL ALWAYS BE THE SAME FOR A GIVEN ARTIST
+        // NEED TO CREATE A NEW SEED INCLUDING THE TITLE OF THE PROPOSAL OR A UNIQUE IDENTIFIER
         seeds = [b"proposal", artist.key().as_ref(), creator.key().as_ref()],
         bump
     )]
