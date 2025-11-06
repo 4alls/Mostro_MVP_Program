@@ -25,6 +25,8 @@ pub struct CreateArtist<'info> {
     #[account(
         init,
         payer = admin,
+        // USE SPACE CALCULATION FROM THE ARTIST STATE
+        // space = 8 + Artist::INIT_SPACE,
         space = Artist::space(),
         seeds = [b"artist"], // Only static part; full validation in handler
         bump
@@ -65,6 +67,9 @@ pub fn create_artist_handler(
     // -------------------------------------------------
     // Ensures the client passed the correct artist PDA derived from the name.
     // Prevents arbitrary accounts from being used in place of the real one.
+    // THIS REQUIRE WILL ALWAYS THROW THE ERROR INVALID ARTIST AS THE ASSERTION WILL NEVER BE EQUAL
+    // ctx.accounts.artist.key() IS THE PDA DERIVED ONLY FROM "ARTIST" SEED, NOT INCLUDING THE NAME
+    // expected_artist_pda IS THE PDA DERIVED FROM "ARTIST" + artist_name
     require!(
         ctx.accounts.artist.key() == expected_artist_pda,
         ErrorCode::InvalidArtist

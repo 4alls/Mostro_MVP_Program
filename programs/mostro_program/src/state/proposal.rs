@@ -49,3 +49,32 @@ impl Proposal {
         1 // bump
     }
 }
+
+/// USE InitSpace TO AUTOMATICALLY CALCULATE THE RIGHT SPACE FOR THE ACCOUNT
+/// USE [max_len] TO SET MAX LENGTHS FOR VARIABLE-LENGTH FIELDS
+
+/*
+use anchor_lang::prelude::*;
+
+#[account]
+#[derive(InitSpace)]
+pub struct Proposal {
+    pub artist: Pubkey,  
+    pub creator: Pubkey, 
+    #[max_len(100)]
+    pub title: String,
+    #[max_len(500)]
+    pub description: String,
+    pub number_of_tokens: u64,
+    pub yes_votes: u64,
+    pub no_votes: u64,
+    pub start_date: i64,
+    pub end_date: i64,
+    pub status: u8, 
+    pub milestone_reached: bool,
+    pub early_access: bool,
+    pub usdc_collected: u64,
+    pub artist_tokens_sold: u64,
+    pub bump: u8,
+}
+*/

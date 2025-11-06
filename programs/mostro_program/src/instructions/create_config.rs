@@ -26,6 +26,8 @@ pub struct CreateConfig<'info> {
     #[account(
         init,
         payer = admin,
+        // USE SPACE CALCULATION FROM THE CONFIG STATE
+        // space = 8 + Config::INIT_SPACE,
         space = Config::space(),
         seeds = [b"global_config"],
         bump

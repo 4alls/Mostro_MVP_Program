@@ -12,6 +12,8 @@ pub struct CreateProposal<'info> {
     #[account(
         init,
         payer = creator,
+        // USE SPACE CALCULATION FROM THE PROPOSAL STATE
+        // space = 8 + Proposal::INIT_SPACE,
         space = Proposal::space(),
         seeds = [b"proposal", artist.key().as_ref(), creator.key().as_ref()],
         bump

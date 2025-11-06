@@ -17,3 +17,18 @@ impl Config {
         32 // pump_fun_service_wallet
     }
 }
+
+/// USE InitSpace TO AUTOMATICALLY CALCULATE THE RIGHT SPACE FOR THE ACCOUNT
+/*
+use anchor_lang::prelude::*;
+
+#[account]
+#[derive(InitSpace)]
+pub struct Config {
+    pub percentage_artist: u8,
+    pub percentage_mostro: u8,
+    pub admin_wallet: Pubkey,
+    pub pump_fun_service_wallet: Pubkey,
+    pub bump: u8,
+}
+*/
