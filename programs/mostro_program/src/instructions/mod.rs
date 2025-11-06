@@ -8,6 +8,7 @@ pub mod vote_proposal;
 pub mod finalize_proposal;
 pub mod buy_tokens_for_proposal;
 pub mod release_tokens;
+pub mod create_perk;
 
 // -----------------------------
 // Instruction handlers & accounts
@@ -19,3 +20,4 @@ pub use vote_proposal::*;
 pub use finalize_proposal::*;
 pub use buy_tokens_for_proposal::*;
 pub use release_tokens::*;   
+pub use create_perk::*;
