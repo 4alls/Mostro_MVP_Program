@@ -28,6 +28,7 @@ pub struct CreateArtist<'info> {
         // USE SPACE CALCULATION FROM THE ARTIST STATE
         // space = 8 + Artist::INIT_SPACE,
         space = Artist::space(),
+        //MUST CHANGE THIS SEED BECAUSE IT CREATES THE SAME PDA FOR EVERY ARTIST
         seeds = [b"artist"], // Only static part; full validation in handler
         bump
     )]

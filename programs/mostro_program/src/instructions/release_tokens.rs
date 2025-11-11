@@ -31,6 +31,7 @@ pub fn release_tokens_handler(ctx: Context<ReleaseTokens>, artist_token_price: u
                 **ctx.accounts.artist_wallet.try_borrow_mut_lamports()? += proposal.usdc_collected;
             } else {
                 // Otherwise, calculate how many artist tokens should be minted for the collected USDC
+                // WE ARE CURRENTLY NOT USING THIS VALUE
                 let _tokens_equivalent = proposal.usdc_collected / artist_token_price;
 
                 // Transfer USDC to artist
