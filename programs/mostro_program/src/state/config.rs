@@ -18,7 +18,7 @@ impl Config {
     }
 }
 
-/// USE InitSpace TO AUTOMATICALLY CALCULATE THE RIGHT SPACE FOR THE ACCOUNT
+// USE InitSpace TO AUTOMATICALLY CALCULATE THE RIGHT SPACE FOR THE ACCOUNT
 /*
 use anchor_lang::prelude::*;
 
