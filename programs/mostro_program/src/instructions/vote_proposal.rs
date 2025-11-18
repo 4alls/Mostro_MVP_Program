@@ -55,7 +55,7 @@ pub fn vote_proposal_handler(
     if vote_yes {
         proposal.yes_votes += voter_token_balance;
     } else {
-        proposal.no_votes += voter_token_balance;
+        proposal.no_votes += voter_token_balance; 
     }
 
     // --- Step 3: Optional early finalize if milestone & majority reached ---
