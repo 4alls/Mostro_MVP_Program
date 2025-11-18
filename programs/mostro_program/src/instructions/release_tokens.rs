@@ -1,4 +1,4 @@
-// ALL THIS PROGRAM SHOULD NOT EXIST ANYMORE AS WE ARE USING STREAMFLOW SDK FOR VESTING
+//Needs to be deleted because the streamflow vesting will be used
 
 use anchor_lang::prelude::*;
 use crate::state::Proposal;
