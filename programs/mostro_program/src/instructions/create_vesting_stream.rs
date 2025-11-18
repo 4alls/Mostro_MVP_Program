@@ -1,0 +1,144 @@
+use anchor_lang::prelude::*;
+
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
+
+use streamflow_sdk;
+use streamflow_sdk::cpi::accounts::{
+    Create as CpiCreate,
+};
+
+#[derive(Accounts)]
+pub struct Create<'info> {
+    #[account(mut)]
+    pub sender: Signer<'info>,
+    #[account(
+        associated_token::mint = mint,
+        associated_token::authority = sender,
+    )]
+    pub sender_tokens: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    /// CHECK: Wallet address of the recipient.
+    pub recipient: UncheckedAccount<'info>,
+    #[account(
+        init_if_needed,
+        payer = sender,
+        associated_token::mint = mint,
+        associated_token::authority = recipient,
+    )]
+    pub recipient_tokens: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub metadata: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"strm", metadata.key().to_bytes().as_ref()],
+        bump,
+        seeds::program = streamflow_program
+    )]
+    /// CHECK: The escrow account holding the funds, expects empty (non-initialized) account.
+    pub escrow_tokens: AccountInfo<'info>,
+    #[account(mut)]
+    /// CHECK: Streamflow treasury account.
+    pub streamflow_treasury: UncheckedAccount<'info>,
+    #[account(
+        init_if_needed,
+        payer = sender,
+        associated_token::mint = mint,
+        associated_token::authority = streamflow_treasury,
+    )]
+    /// CHECK: Associated token account address of `streamflow_treasury`.
+    pub streamflow_treasury_tokens: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    /// CHECK: Delegate account for automatically withdrawing contracts.
+    pub withdrawor: UncheckedAccount<'info>,
+    #[account(mut)]
+    /// CHECK: Partner treasury account.
+    pub partner: UncheckedAccount<'info>,
+    #[account(
+        init_if_needed,
+        payer = sender,
+        associated_token::mint = mint,
+        associated_token::authority = partner,
+    )]
+    pub partner_tokens: Box<Account<'info, TokenAccount>>,
+    pub mint: Box<Account<'info, Mint>>,
+    /// CHECK: Internal program that handles fees for specified partners.
+    pub fee_oracle: UncheckedAccount<'info>,
+    pub rent: Sysvar<'info, Rent>,
+    /// CHECK: Streamflow protocol (alias timelock) program account.
+    pub streamflow_program: UncheckedAccount<'info>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+}
+
+pub fn create(
+        ctx: Context<Create>,
+        start_time: u64,
+        net_amount_deposited: u64,
+        period: u64,
+        amount_per_period: u64,
+        cliff: u64,
+        cliff_amount: u64,
+        cancelable_by_sender: bool,
+        cancelable_by_recipient: bool,
+        automatic_withdrawal: bool,
+        transferable_by_sender: bool,
+        transferable_by_recipient: bool,
+        can_topup: bool,
+        stream_name: [u8; 64],
+        withdraw_frequency: u64,
+        pausable: Option<bool>,
+        can_update_rate: Option<bool>,
+    ) -> Result<()> {
+        msg!("Got create");
+        // initializing accounts struct for cross-program invoke
+        let accs = CpiCreate {
+            sender: ctx.accounts.sender.to_account_info(),
+            sender_tokens: ctx.accounts.sender_tokens.to_account_info(),
+            recipient: ctx.accounts.recipient.to_account_info(),
+            recipient_tokens: ctx.accounts.recipient_tokens.to_account_info(),
+            metadata: ctx.accounts.metadata.to_account_info(),
+            escrow_tokens: ctx.accounts.escrow_tokens.to_account_info(),
+            streamflow_treasury: ctx.accounts.streamflow_treasury.to_account_info(),
+            streamflow_treasury_tokens: ctx.accounts.streamflow_treasury_tokens.to_account_info(),
+            withdrawor: ctx.accounts.withdrawor.to_account_info(),
+            partner: ctx.accounts.partner.to_account_info(),
+            partner_tokens: ctx.accounts.partner_tokens.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
+            fee_oracle: ctx.accounts.fee_oracle.to_account_info(),
+            rent: ctx.accounts.rent.to_account_info(),
+            timelock_program: ctx.accounts.streamflow_program.to_account_info(),
+            token_program: ctx.accounts.token_program.to_account_info(),
+            associated_token_program: ctx.accounts.associated_token_program.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+        };
+
+        // initializing anchor CpiContext, can be used in native solana programs as well
+        // additional reference: https://project-serum.github.io/anchor/tutorials/tutorial-3.html
+        let cpi_ctx = CpiContext::new(ctx.accounts.streamflow_program.to_account_info(), accs);
+
+        // calling cpi method which calls solana_program invoke with serialized instruction data
+        // fit for streamflow program
+        streamflow_sdk::cpi::create(
+            cpi_ctx,
+            start_time,
+            net_amount_deposited,
+            period,
+            amount_per_period,
+            cliff,
+            cliff_amount,
+            cancelable_by_sender,
+            cancelable_by_recipient,
+            automatic_withdrawal,
+            transferable_by_sender,
+            transferable_by_recipient,
+            can_topup,
+            stream_name,
+            withdraw_frequency,
+            pausable,
+            can_update_rate
+        )
+}
