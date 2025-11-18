@@ -1,3 +1,5 @@
+// ALL THIS PROGRAM SHOULD NOT EXIST ANYMORE AS WE ARE USING STREAMFLOW SDK FOR VESTING
+
 use anchor_lang::prelude::*;
 use crate::state::Proposal;
 use crate::error::ErrorCode;
